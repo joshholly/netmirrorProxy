@@ -6,20 +6,32 @@ on:
   repository_dispatch:
 
 jobs:
-  build:
+  setup:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      # Add your build steps here
+
+  build:
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - uses: actions/checkout@v2
+      # Add your build steps here, if any
 
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
     needs: build
     steps:
       - uses: actions/checkout@v2
-      - name: Publish
-        uses: cloudflare/wrangler-action@1.3.0
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
         with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          command: publish
+          node-version: '16'  # Specify the Node.js version you prefer
+      - name: Install Wrangler CLI
+        run: |
+          npm install -g wrangler@latest
+      - name: Publish
+        run: wrangler publish
+        env:
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
